@@ -118,17 +118,17 @@ class replay_buffer_goal_density:
 
     def fit_density_model(self):
         X_train = self.buffers['pair'][:(self.current_size_in_rollouts * self.T)]
-        self.clf = mixture.BayesianGaussianMixture(weight_concentration_prior_type="dirichlet_distribution", n_components=10, max_iter=500)
+        self.clf = mixture.BayesianGaussianMixture(weight_concentration_prior_type="dirichlet_distribution", n_components=10, max_iter=300)
         self.clf.fit(X_train)
 
-        pred = -self.clf.score_samples(X_train)
+        pred = self.clf.score_samples(X_train)
 
         self.pred_min = pred.min()
         pred = pred - self.pred_min
         pred = np.clip(pred, 0, None)
         self.pred_sum = pred.sum()
         pred = pred / self.pred_sum
-        self.pred_avg = (1 / pred.shape[0])
+        # self.pred_avg = (1 / pred.shape[0])
 
         with self.lock:
             self.buffers['d'][:(self.current_size_in_rollouts * self.T)] = pred.reshape(-1,1).copy()
@@ -178,9 +178,11 @@ class replay_buffer_goal_density:
                 density_pairs = self.buffers['d'][:(self.current_size_in_rollouts * self.T)]
 
                 if rank_method == 'density':
-                    self.buffers['p'][:(self.current_size_in_rollouts * self.T)] = density_pairs.copy()
+                    complement_density = 1 - density_pairs
+                    self.buffers['p'][:(self.current_size_in_rollouts * self.T)] = complement_density.copy()
                 elif rank_method == 'rank':
-                    density_rank = rankdata(density_pairs, method='dense')
+                    complement_density = 1 - density_pairs
+                    density_rank = rankdata(complement_density, method='dense')
                     density_rank = density_rank - 1
                     density_rank = density_rank.reshape(-1, 1)
                     self.buffers['p'][:(self.current_size_in_rollouts * self.T)] = density_rank.copy()
