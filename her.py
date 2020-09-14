@@ -1,5 +1,4 @@
 import numpy as np
-
 import random
 
 class her_sampler:
@@ -42,7 +41,6 @@ class her_sampler:
         transitions = {k: transitions[k].reshape(batch_size, *transitions[k].shape[1:])
                         for k in transitions.keys()}
 
-        #val = input('Pause...')
         return transitions
 
     def sample_normal_transitions(self, episode_batch, batch_size_in_transitions):

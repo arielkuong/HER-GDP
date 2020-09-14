@@ -15,9 +15,7 @@ def get_args():
     parser.add_argument('--num-rollouts-per-cycle', type=int, default=2, help='the rollouts per mpi')
     parser.add_argument('--batch-size', type=int, default=256, help='the sample batch size')
     parser.add_argument('--buffer-size', type=int, default=int(1e6), help='the size of the buffer')
-    #parser.add_argument('--save-interval', type=int, default=1, help='the interval that save the trajectory')
     parser.add_argument('--seed', type=int, default=123, help='random seed')
-    #parser.add_argument('--num-workers', type=int, default=1, help='the number of cpus to collect samples')
     parser.add_argument('--replay-strategy', type=str, default='future',
                         help='the HER replay strategy to be used. "future" uses HER, "none" disables HER.')
     parser.add_argument('--clip-return', type=float, default=50, help='if clip the returns')

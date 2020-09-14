@@ -2,9 +2,7 @@ import torch
 import os
 from datetime import datetime
 import numpy as np
-# from mpi4py import MPI
 from models import actor, critic
-# from MPI_utils import sync_networks, sync_grads
 from replay_buffer import replay_buffer, replay_buffer_goal_density
 from normalizer import normalizer
 from her import her_sampler
@@ -22,9 +20,7 @@ class ddpg_agent:
         # create the network
         self.actor_network = actor(env_params)
         self.critic_network = critic(env_params)
-        # sync the networks across the cpus
-        #sync_networks(self.actor_network)
-        #sync_networks(self.critic_network)
+
         # build up the target network
         self.actor_target_network = actor(env_params)
         self.critic_target_network = critic(env_params)
@@ -62,13 +58,11 @@ class ddpg_agent:
         # create the normalizer
         self.o_norm = normalizer(size=env_params['obs'], default_clip_range=self.args.clip_range)
         self.g_norm = normalizer(size=env_params['goal'], default_clip_range=self.args.clip_range)
+
         # create the dict for store the model
-        #if MPI.COMM_WORLD.Get_rank() == 0:
         if not os.path.exists(self.args.save_dir):
             os.mkdir(self.args.save_dir)
 
-        # makeup a suffix for the model path to indicate which method is used for Training
-        #self.folder_siffix = '_' + self.args.replay_strategy + '_' + self.args.env_params.reward_type
         # path to save the model
         self.model_path = os.path.join(self.args.save_dir, self.args.env_name)
         if not os.path.exists(self.model_path):
@@ -76,10 +70,6 @@ class ddpg_agent:
         self.model_path = os.path.join(self.model_path, 'seed_' + str(self.args.seed))
         if not os.path.exists(self.model_path):
             os.mkdir(self.model_path)
-
-
-        # for simulation
-        #self.avg_prior_update_time = 0
 
 
     def learn(self):
@@ -170,10 +160,6 @@ class ddpg_agent:
             success_rate = self._eval_agent()
             success_rate_all.append(success_rate)
             np.save(self.model_path + '/eval_success_rates.npy', success_rate_all)
-
-            #if MPI.COMM_WORLD.Get_rank() == 0:
-            # torch.save([self.o_norm.mean, self.o_norm.std, self.g_norm.mean, self.g_norm.std, self.actor_network.state_dict(), self.critic_network.state_dict()], \
-            #             self.model_path + '/model_last.pt')
 
             if success_rate >= best_success_rate:
                 best_success_rate = success_rate
@@ -306,12 +292,10 @@ class ddpg_agent:
         # start to update the network
         self.actor_optim.zero_grad()
         actor_loss.backward()
-        #sync_grads(self.actor_network)
         self.actor_optim.step()
         # update the critic_network
         self.critic_optim.zero_grad()
         critic_loss.backward()
-        #sync_grads(self.critic_network)
         self.critic_optim.step()
 
         #print('network updated')

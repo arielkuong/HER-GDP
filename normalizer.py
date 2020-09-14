@@ -1,6 +1,5 @@
 import threading
 import numpy as np
-from mpi4py import MPI
 
 class normalizer:
     def __init__(self, size, eps=1e-2, default_clip_range=np.inf):
@@ -30,13 +29,6 @@ class normalizer:
             self.local_sumsq += (np.square(v)).sum(axis=0)
             self.local_count[0] += v.shape[0]
 
-    # sync the parameters across the cpus
-    def sync(self, local_sum, local_sumsq, local_count):
-        local_sum[...] = self._mpi_average(local_sum)
-        local_sumsq[...] = self._mpi_average(local_sumsq)
-        local_count[...] = self._mpi_average(local_count)
-        return local_sum, local_sumsq, local_count
-
     def recompute_stats(self):
         with self.lock:
             local_count = self.local_count.copy()
@@ -46,25 +38,12 @@ class normalizer:
             self.local_count[...] = 0
             self.local_sum[...] = 0
             self.local_sumsq[...] = 0
-        # synrc the stats
-        #sync_sum, sync_sumsq, sync_count = self.sync(local_sum, local_sumsq, local_count)
-        # update the total stuff
-        #self.total_sum += sync_sum
-        #self.total_sumsq += sync_sumsq
-        #self.total_count += sync_count
         self.total_sum += local_sum
         self.total_sumsq += local_sumsq
         self.total_count += local_count
         # calculate the new mean and std
         self.mean = self.total_sum / self.total_count
         self.std = np.sqrt(np.maximum(np.square(self.eps), (self.total_sumsq / self.total_count) - np.square(self.total_sum / self.total_count)))
-
-    # average across the cpu's data
-    def _mpi_average(self, x):
-        buf = np.zeros_like(x)
-        MPI.COMM_WORLD.Allreduce(x, buf, op=MPI.SUM)
-        buf /= MPI.COMM_WORLD.Get_size()
-        return buf
 
     # normalize the observation
     def normalize(self, v, clip_range=None):

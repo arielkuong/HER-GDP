@@ -2,7 +2,6 @@ import torch
 from models import actor
 from arguments import get_args
 import gym
-import gym_customized
 import numpy as np
 
 # process the inputs
@@ -18,10 +17,10 @@ def process_inputs(o, g, o_mean, o_std, g_mean, g_std, args):
 if __name__ == '__main__':
     args = get_args()
     # load the model param
-    model_path = args.save_dir + args.env_name + '/model_best.pt'
+    model_path = args.save_dir + args.env_name + '/seed_' + str(args.seed) + '/model_best.pt'
     o_mean, o_std, g_mean, g_std, actor_model, critic_model = torch.load(model_path, map_location=lambda storage, loc: storage)
     # create the environment
-    env = gym_customized.make(args.env_name)
+    env = gym.make(args.env_name)
     # get the env param
     observation = env.reset()
     # get the environment params
@@ -31,7 +30,6 @@ if __name__ == '__main__':
                   'action_max': env.action_space.high[0],
                   }
     # create the actor network
-    #total_success = 0
     total_success_rate = []
     actor_network = actor(env_params)
     actor_network.load_state_dict(actor_model)
@@ -54,14 +52,11 @@ if __name__ == '__main__':
             obs = observation_new['observation']
             per_success_rate.append(info['is_success'])
         total_success_rate.append(per_success_rate)
-        print('the episode is: {}, is success: {}'.format(i, info['is_success']))
-        if env.is_on_palm() == False:
-            print('Object dropped')
-            drop_count +=1
-        #if info['is_success'] == 1:
-        #    total_success += 1
+        print('episode number: {}, is success: {}'.format(i, info['is_success']))
+        # if env.is_on_palm() == False:
+        #     print('Object dropped')
+        #     drop_count +=1
     total_success_rate = np.array(total_success_rate)
     global_success_rate = np.mean(total_success_rate[:, -1])
     print('average success rate is: {:.3f}'.format(global_success_rate))
-    print('Object dropped rate is: {:.3f}'.format(drop_count/args.demo_length))
-    #print('episode success rate over {} episodes is: {:.3f}'.format(args.demo_length, total_success/args.demo_length))
+    # print('Object dropped rate is: {:.3f}'.format(drop_count/args.demo_length))

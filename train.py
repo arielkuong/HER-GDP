@@ -1,20 +1,11 @@
 import numpy as np
 import gym
-#import gym_customized
 import os, sys
 from arguments import get_args
-#from mpi4py import MPI
-#from subprocess import CalledProcessError
 from ddpg_agent import ddpg_agent
 import random
 import torch
 
-from gym.envs.registration import register
-
-"""
-train the agent, the MPI part code is copy from openai baselines(https://github.com/openai/baselines/blob/master/baselines/her)
-
-"""
 def get_env_params(env, args):
     obs = env.reset()
     # close the environment
@@ -36,18 +27,12 @@ def get_env_params(env, args):
 def launch(args):
     # create the ddpg_agent
     env = gym.make(args.env_name)
-    #env = gym_customized.make(args.env_name)
     # set random seeds for reproduce
-    #env.seed(args.seed + MPI.COMM_WORLD.Get_rank())
     env.seed(args.seed)
-    #random.seed(args.seed + MPI.COMM_WORLD.Get_rank())
     random.seed(args.seed)
-    #np.random.seed(args.seed + MPI.COMM_WORLD.Get_rank())
     np.random.seed(args.seed)
-    #torch.manual_seed(args.seed + MPI.COMM_WORLD.Get_rank())
     torch.manual_seed(args.seed)
     if args.cuda:
-        #torch.cuda.manual_seed(args.seed + MPI.COMM_WORLD.Get_rank())
         torch.cuda.manual_seed(args.seed)
     # get the environment parameters
     env_params = get_env_params(env,args)
@@ -58,10 +43,6 @@ def launch(args):
     ddpg_trainer.learn()
 
 if __name__ == '__main__':
-    # take the configuration for the HER
-    # os.environ['OMP_NUM_THREADS'] = '1'
-    # os.environ['MKL_NUM_THREADS'] = '1'
-    # os.environ['IN_MPI'] = '1'
     # get the params
     args = get_args()
     launch(args)
