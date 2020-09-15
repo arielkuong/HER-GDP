@@ -122,3 +122,50 @@ class her_sampler:
                         for k in transitions.keys()}
 
         return transitions
+
+    def sample_her_transitions_entropy(self, episode_batch, batch_size_in_transitions, rank_method, temperature, update_stats=False):
+
+        T = episode_batch['actions'].shape[1]
+        rollout_batch_size = episode_batch['actions'].shape[0]
+        batch_size = batch_size_in_transitions
+
+        # select which rollouts and which timesteps to be used
+        episode_idxs = np.random.randint(0, rollout_batch_size, batch_size)
+        t_samples = np.random.randint(T, size=batch_size)
+
+        if not update_stats:
+            if rank_method == 'none':
+                entropy_trajectory = episode_batch['e']
+            else:
+                entropy_trajectory = episode_batch['p']
+            p_trajectory = np.power(entropy_trajectory, 1/(temperature+1e-2))
+            p_trajectory = p_trajectory / p_trajectory.sum()
+            episode_idxs_entropy = np.random.choice(rollout_batch_size, size=batch_size, replace=True, p=p_trajectory.flatten())
+            episode_idxs = episode_idxs_entropy
+
+        transitions = {}
+        for key in episode_batch.keys():
+            if not key =='p' and not key == 's' and not key == 'e':
+                transitions[key] = episode_batch[key][episode_idxs, t_samples].copy()
+
+        # Select future time indexes proportional with probability future_p. These
+        # will be used for HER replay by substituting in future goals.
+        her_indexes = np.where(np.random.uniform(size=batch_size) < self.future_p)
+
+        future_offset = np.random.uniform(size=batch_size) * (T - t_samples)
+        future_offset = future_offset.astype(int)
+        future_t = (t_samples + 1 + future_offset)[her_indexes]
+
+        # Replace goal with achieved goal but only for the previously-selected
+        # HER transitions (as defined by her_indexes). For the other transitions,
+        # keep the original goal.
+        future_ag = episode_batch['ag'][episode_idxs[her_indexes], future_t]
+        transitions['g'][her_indexes] = future_ag
+
+        # Re-compute reward since we may have substituted the goal.
+        transitions['r'] = np.expand_dims(self.reward_func(transitions['ag_next'], transitions['g'], None), 1)
+
+        transitions = {k: transitions[k].reshape(batch_size, *transitions[k].shape[1:])
+                        for k in transitions.keys()}
+
+        return transitions

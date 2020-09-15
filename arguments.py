@@ -36,12 +36,12 @@ def get_args():
     parser.add_argument('--load-path', type=str, default=None, help='the path to load the previous saved models')
 
     parser.add_argument('--prioritization', type=str, default='goaldensity',
-                        help='the prioritization strategy to be used. "goaldensity" uses GDP; "none" is vanilla HER;')
+                        help='the prioritization strategy to be used. "goaldensity" uses GDP; "entropy" uses MEP; "none" is vanilla HER;')
 
     # goal density based prioritization
     parser.add_argument('--fit-interval', type=int, default=50, help='fit interval for updating density model during a epoch, disabled when equal to --n-cycles')
     parser.add_argument('--temperature', type=float, default=1.0, help='temperature value for Entropy-Based Prioritization (MEP)')
-    parser.add_argument('--rank-method', type=str, default='density', help='energy ranking method. select from "density", "rank"')
+    parser.add_argument('--rank-method', type=str, default='density', help='energy ranking method. select from "density", "rank" for GDP, select from "none", "dense" for MEP')
 
     args = parser.parse_args()
 

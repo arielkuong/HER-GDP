@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 import numpy as np
 from models import actor, critic
-from replay_buffer import replay_buffer, replay_buffer_goal_density
+from replay_buffer import replay_buffer, replay_buffer_goal_density, replay_buffer_entropy
 from normalizer import normalizer
 from her import her_sampler
 
@@ -51,6 +51,8 @@ class ddpg_agent:
         # create the replay buffer
         if self.args.prioritization == 'goaldensity':
             self.buffer = replay_buffer_goal_density(self.env_params, self.args.buffer_size, self.her_module.sample_her_transitions_goal_density)
+        elif self.args.prioritization == 'entropy':
+            self.buffer = replay_buffer_entropy(self.env_params, self.args.buffer_size, self.her_module.sample_her_transitions_entropy)
         else:
             self.buffer = replay_buffer(self.env_params, self.args.buffer_size, self.her_module.sample_her_transitions)
 
@@ -130,7 +132,7 @@ class ddpg_agent:
                 mb_actions = np.array(mb_actions)
 
 
-                if self.args.prioritization == 'goaldensity':
+                if self.args.prioritization == 'goaldensity' or 'entropy':
                     if (cycle % self.args.fit_interval == 0) and (not cycle == 0) or (cycle == self.args.n_cycles-1):
                         print('[{}] epoch: {}, cycle: {}, updating density model'.format(datetime.now(),epoch, cycle))
                         self.buffer.fit_density_model()
@@ -139,6 +141,8 @@ class ddpg_agent:
 
                 # store the episodes
                 if self.args.prioritization == 'goaldensity':
+                    self.buffer.store_episode([mb_obs, mb_ag, mb_g, mb_actions], self.args.rank_method)
+                elif self.args.prioritization == 'entropy':
                     self.buffer.store_episode([mb_obs, mb_ag, mb_g, mb_actions], self.args.rank_method)
                 else:
                     self.buffer.store_episode([mb_obs, mb_ag, mb_g, mb_actions])
@@ -240,6 +244,8 @@ class ddpg_agent:
     def _update_network(self):
         # sample the episodes
         if self.args.prioritization == 'goaldensity':
+            transitions = self.buffer.sample(self.args.batch_size, self.args.rank_method, self.args.temperature)
+        elif self.args.prioritization == 'entropy':
             transitions = self.buffer.sample(self.args.batch_size, self.args.rank_method, self.args.temperature)
         else:
             transitions = self.buffer.sample(self.args.batch_size)
