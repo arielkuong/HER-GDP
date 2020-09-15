@@ -14,12 +14,12 @@ For example, train the agent for FetchPush-v1 environment with HER+GDP and seed 
 python train.py --env-name=FetchPush-v1 --n-epochs=50 --n-cycles=50 --num-rollouts-per-cycle=40 --n-batches=40 --batch-size=5120 --buffer-size=5000000 --prioritization=goaldensity --temperature=1.0 --rank-method=rank --fit-interval=5 --replay-strategy=future --n-test-rollouts=100 --seed=574 --cuda
 ```
 
-Train the agent for HandManipulateEggRotate-v0 environment with HER only and seed as 835 using the hyperparameters same as used in our paper
+Or train the agent for HandManipulateEggRotate-v0 environment with HER only and seed as 835 using the hyperparameters same as used in our paper
 ```
-python3 train.py --env-name=HandManipulateEggRotate-v0 --n-epochs=40 --n-cycles=50 --num-rollouts-per-cycle=40 --n-batches=40  --batch-size=5120 --buffer-size=2000000 --prioritization=none --replay-strategy=future --n-test-rollouts=100 --save-dir=saved_models_her/ --seed=835 --cuda
+python train.py --env-name=HandManipulateEggRotate-v0 --n-epochs=40 --n-cycles=50 --num-rollouts-per-cycle=40 --n-batches=40  --batch-size=5120 --buffer-size=2000000 --prioritization=none --replay-strategy=future --n-test-rollouts=100 --save-dir=saved_models_her/ --seed=835 --cuda
 ```
 
-Or you can run the .sh script file provided with the code to run experiments with several random seed as benchmark.
+Or you can run the .sh script files provided with the code to run experiments with several random seed as benchmark.
 
 ## Citation
 To cite our paper, using the following version:
