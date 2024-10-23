@@ -132,8 +132,8 @@ class ddpg_agent:
                 mb_actions = np.array(mb_actions)
 
 
-                if self.args.prioritization == 'goaldensity' or 'entropy':
-                    if (cycle % self.args.fit_interval == 0) and (not cycle == 0) or (cycle == self.args.n_cycles-1):
+                if self.args.prioritization == 'goaldensity' or self.args.prioritization == 'entropy':
+                    if ((cycle % self.args.fit_interval == 0) and (not cycle == 0)) or (cycle == self.args.n_cycles-1):
                         print('[{}] epoch: {}, cycle: {}, updating density model'.format(datetime.now(),epoch, cycle))
                         self.buffer.fit_density_model()
                         print('[{}] density model updated.'.format(datetime.now()))
@@ -163,7 +163,12 @@ class ddpg_agent:
             # start to do the evaluation
             success_rate = self._eval_agent()
             success_rate_all.append(success_rate)
-            np.save(self.model_path + '/eval_success_rates.npy', success_rate_all)
+            if self.args.prioritization == 'goaldensity':
+                np.save(self.model_path + '/eval_success_rates_gdp.npy', success_rate_all)
+            elif self.args.prioritization == 'entropy':
+                np.save(self.model_path + '/eval_success_rates_mep.npy', success_rate_all)
+            else:
+                np.save(self.model_path + '/eval_success_rates_her.npy', success_rate_all)
 
             if success_rate >= best_success_rate:
                 best_success_rate = success_rate

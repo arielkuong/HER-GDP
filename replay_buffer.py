@@ -118,7 +118,7 @@ class replay_buffer_goal_density:
 
     def fit_density_model(self):
         X_train = self.buffers['pair'][:(self.current_size_in_rollouts * self.T)]
-        self.clf = mixture.BayesianGaussianMixture(weight_concentration_prior_type="dirichlet_distribution", n_components=10, max_iter=300)
+        self.clf = mixture.BayesianGaussianMixture(weight_concentration_prior_type="dirichlet_distribution", n_components=10, max_iter=50)
         self.clf.fit(X_train)
 
         pred = self.clf.score_samples(X_train)
